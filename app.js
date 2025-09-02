@@ -3,51 +3,60 @@ const app = express();
 const port = 3000;
 app.use(express.json());
 
-function Converter(type, temperature) {
-  let newTemp;
-  switch (type.toUpperCase()) {
-    case "C":
-      newTemp = (9 * temperature) / 5 + 32;
-      break;
+let alunos = [];
 
-    case "F":
-      newTemp = (5 * (temperature - 32)) / 9;
-      break;
-
-    default:
-      newTemp = 0;
-      break;
-  }
-  return newTemp;
-}
-
-app.post("/temperature", (req, res) => {
-  const { type, temperature } = req.body;
-
-  if (!type || temperature === undefined) {
-    return res
-      .status(400)
-      .send("Erro: parâmetros 'type' e 'temperature' são obrigatórios.");
-  }
-
-  const newTemperature = Converter(type, temperature);
-  res.send(`New Temperature: ${newTemperature}`);
+app.post("/", (req, res) => {
+  const { ra, nome, turma } = req.body;
+  alunos.push({ ra, nome, turma, cursos: [] });
+  res.send(alunos);
 });
 
-const veiculos = [{id: 1, nome:"fiat"},{id: 2, nome:"Celta"},{id: 3, nome:"Maria"}]
+app.post("/curso", (req, res) => {
+  const { ra, curso } = req.body;
+  const aluno = alunos.find(a => a.ra == ra);
+  aluno.cursos.push(curso);
+  res.send(alunos);
+});
 
-app.put('/', (req, res) => {
-  const index = veiculos.findIndex(veiculo => veiculo.id == req.query.id);
-  veiculos[index] = {id: req.query.id, nome: req.body}
-  res.send(JSON.stringify(veiculos))
-})
+app.put("/", (req, res) => {
+  const { ra, nome, turma } = req.body;
+  const aluno = alunos.find(a => a.ra == ra);
+  if (nome) aluno.nome = nome;
+  if (turma) aluno.turma = turma;
+  res.send(alunos);
+});
 
-app.delete('/', (req,res) => {
-  const index = veiculos.findIndex(veiculo => veiculo.id == req.query.id);
-  veiculos.splice(index, 1);
-  res.send(JSON.stringify(veiculos))
-})
+app.put("/curso", (req, res) => {
+  const { ra, antigo, novo } = req.body;
+  const aluno = alunos.find(a => a.ra == ra);
+  const i = aluno.cursos.indexOf(antigo);
+  aluno.cursos[i] = novo;
+  res.send(alunos);
+});
+
+app.delete("/", (req, res) => {
+  const { ra } = req.body;
+  alunos = alunos.filter(a => a.ra != ra);
+  res.send(alunos);
+});
+
+app.delete("/curso", (req, res) => {
+  const { ra, curso } = req.body;
+  const aluno = alunos.find(a => a.ra == ra);
+  aluno.cursos = aluno.cursos.filter(c => c != curso);
+  res.send(alunos);
+});
+
+app.get("/", (req, res) => {
+  res.send(alunos);
+});
+
+app.get("/aluno", (req, res) => {
+  const { ra } = req.query;
+  const aluno = alunos.find(a => a.ra == ra);
+  res.send(aluno);
+});
 
 app.listen(port, () => {
-  console.log(`Example app listening on port ${port}`);
+  console.log(`Servidor rodando na porta ${port}`);
 });
